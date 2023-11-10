@@ -24,6 +24,7 @@ import java.util.List;
 public class Bot extends TelegramLongPollingBot implements BotCommands {
     private final BotConfig config;
     private final AnimeProxy proxy;
+
     public Bot(BotConfig config, AnimeProxy proxy) {
         this.config = config;
         this.proxy = proxy;
@@ -38,7 +39,7 @@ public class Bot extends TelegramLongPollingBot implements BotCommands {
     public void onUpdateReceived(@NotNull Update update) {
         long chatId;
         String receivedMessage;
-        if (update.hasMessage() && update.getMessage().hasPhoto()){
+        if (update.hasMessage() && update.getMessage().hasPhoto()) {
             var photo = update.getMessage().getPhoto().get(update.getMessage().getPhoto().size() - 1).getFileId();
 
         } else if (update.hasCallbackQuery()) {
@@ -70,7 +71,7 @@ public class Bot extends TelegramLongPollingBot implements BotCommands {
         });
     }
 
-    private List<String> formAnimeDescription(AnimeInfo animeInfo){
+    private List<String> formAnimeDescription(AnimeInfo animeInfo) {
         List<String> messages = new ArrayList<>();
         animeInfo.getResult().forEach(
                 similar -> {
@@ -78,14 +79,40 @@ public class Bot extends TelegramLongPollingBot implements BotCommands {
                     stringBuilder.append("Anilist ID: ").append(similar.getAnilist())
                             .append("\n").append("Название: ").append(similar.getFilename())
                             .append("\n").append("Эпизод: ").append(similar.getEpisode())
-                            .append("\n").append("Тайм-код: ").append(similar.getFrom()).append("-").append(similar.getTo())
+                            .append("\n").append("Тайм-код: ").append(setFormat(similar.getFrom())).append("-").append(setFormat(similar.getTo()))
                             .append("\n").append("Соответствие: ").append(similar.getSimilarity())
                             .append("\n").append("Видео: ").append(similar.getVideo())
-                            .append("\n").append("Изображение: ").append(similar.getImage())
+                            // .append("\n").append("Изображение: ").append(similar.getImage())
                             .append("\n");
                     messages.add(stringBuilder.toString());
                 });
         return messages;
+    }
+
+    private String setFormat(double time) {
+        int h, min, sec;
+        String hStr, minStr, secStr;
+        double res = time / 3600;
+        double drob = res % 1;
+        h = (int) res;
+        res = drob * 60;
+        drob = res % 1;
+        min = (int) res;
+        res = drob * 60;
+        sec = (int) Math.round(res);
+        hStr = String.valueOf(h);
+        minStr = String.valueOf(min);
+        secStr = String.valueOf(sec);
+        if (h < 10) {
+            hStr = 0 + hStr;
+        }
+        if (min < 10) {
+            minStr = 0 + minStr;
+        }
+        if (sec < 10) {
+            secStr = 0 + secStr;
+        }
+        return h == 0 ? minStr + ":" + secStr : hStr + ":" + minStr + ":" + secStr;
     }
 
     private void answerUtils(String messageText, long chatId) {
@@ -103,6 +130,7 @@ public class Bot extends TelegramLongPollingBot implements BotCommands {
             }
         }
     }
+
     @BotCommandHandler(value = "/help")
     private void helpCommandHandler(long chatId) {
         log.info("help command was used");
@@ -134,6 +162,7 @@ public class Bot extends TelegramLongPollingBot implements BotCommands {
     public String getBotToken() {
         return config.getBotToken();
     }
+
     @Override
     public String getBotUsername() {
         return config.getBotName();
